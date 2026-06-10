@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مقياس DISC المطور - تحليل الشخصية التفاعلي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #fcfdfe;
+            color: #2d3436;
+            position: relative;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* الخلفية منخفضة الشفافية لتجنب تشتيت النص */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('Screenshot 2026-06-10 150616.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 0.06; /* تم تقليل الشفافية إلى 6% فقط لتكون هادئة جداً */
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* Custom Colors based on Deraah Logo */
+        .text-deraah { color: #c41e7f; } /* Main pink/purple from logo */
+        .bg-deraah { background-color: #c41e7f; }
+        .border-deraah { border-color: #c41e7f; }
+        .hover-bg-deraah:hover { background-color: #a01767; }
+        
+        /* DISC Colors based on the presentation image */
+        .text-disc-d { color: #d32f2f; } /* Red */
+        .text-disc-i { color: #fbc02d; } /* Yellow */
+        .text-disc-s { color: #388e3c; } /* Green */
+        .text-disc-c { color: #1976d2; } /* Blue */
+        
+        .bg-disc-d { background-color: #d32f2f; }
+        .bg-disc-i { background-color: #fbc02d; }
+        .bg-disc-s { background-color: #388e3c; }
+        .bg-disc-c { background-color: #1976d2; }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .option-btn.active {
+            background-color: #c41e7f;
+            color: white;
+            border-color: #c41e7f;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .score-row {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 14px;
+        }
+        .score-track {
+            height: 14px;
+            background: #e5e7eb;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .score-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.6s ease;
+        }
+        .progress-bar {
+            transition: width 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative">
+    
+    <div id="app" class="max-w-4xl mx-auto px-4 py-8 relative z-10">
+        
+        <!-- Header Section -->
+        <header class="text-center mb-10 flex flex-col items-center">
+            <!-- استخدام اسم الملف الصحيح للشعار في المجلد المحلي مع خيار بديل في حال لم يحمل -->
+            <img src="deraah_logo.png" alt="أكاديمية درعه" class="h-28 mb-4 rounded-xl object-contain drop-shadow-md" onerror="this.onerror=null; this.src='https://placehold.co/200x100/c41e7f/ffffff?text=Deraah+Academy';">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">مقياس DISC المطور</h1>
+            <p class="text-lg text-gray-600 font-medium">اكتشف إمكانياتك - أكاديمية درعه</p>
+        </header>
+
+        <!-- Intro Section -->
+        <section id="intro-screen" class="glass-card rounded-3xl p-8 text-center border-t-4 border-deraah">
+            <div class="mb-8">
+                <!-- الصورة التعريفية التوضيحية داخل الكارت التعريفي -->
+                <div class="flex justify-center mb-6">
+                    <img src="Screenshot 2026-06-10 150616.png" alt="DISC Brain" class="max-w-full h-auto md:max-h-72 rounded-2xl shadow-lg border border-gray-100 object-cover" onerror="this.style.display='none'">
+                </div>
+                <h2 class="text-2xl font-bold mb-6 text-deraah">اكتشف نمط قيادتك وتفاعلك</h2>
+                <div class="text-right space-y-4 inline-block max-w-lg mx-auto bg-white/80 p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <p class="flex items-center gap-2"><span class="text-deraah font-bold text-xl">•</span> أجب بناءً على سلوكك الطبيعي المعتاد وليس ما تود أن تكون عليه.</p>
+                    <p class="flex items-center gap-2"><span class="text-deraah font-bold text-xl">•</span> اختر الدرجة من 1 (أعارض بشدة) إلى 5 (أوافق بشدة).</p>
+                    <p class="flex items-center gap-2"><span class="text-deraah font-bold text-xl">•</span> يستغرق الاختبار حوالي 5 دقائق فقط.</p>
+                </div>
+            </div>
+            <button onclick="startTest()" class="bg-deraah hover-bg-deraah text-white font-bold py-4 px-12 rounded-full transition duration-300 transform hover:scale-105 shadow-lg text-lg">
+                ابدأ الاختبار الآن
+            </button>
+        </section>
+
+        <!-- Test Section -->
+        <section id="test-screen" class="hidden">
+            <div class="mb-8 glass-card p-4 rounded-2xl">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="progress-text" class="text-sm font-bold text-deraah">السؤال 1 من 28</span>
+                    <span id="percentage-text" class="text-sm font-bold text-deraah">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div id="progress-bar" class="progress-bar bg-deraah h-3 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="question-card" class="glass-card rounded-3xl p-8 md:p-12 shadow-xl border-r-4 border-deraah mb-6">
+                <h3 id="question-text" class="text-2xl md:text-3xl font-medium mb-10 text-center leading-relaxed text-gray-800">جاري تحميل السؤال...</h3>
+                
+                <div class="grid grid-cols-1 gap-4 max-w-xl mx-auto">
+                    <button onclick="recordAnswer(5)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
+                        <span>أوافق بشدة</span>
+                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">5</span>
+                    </button>
+                    <button onclick="recordAnswer(4)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
+                        <span>أوافق</span>
+                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">4</span>
+                    </button>
+                    <button onclick="recordAnswer(3)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
+                        <span>محايد</span>
+                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">3</span>
+                    </button>
+                    <button onclick="recordAnswer(2)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
+                        <span>أعارض</span>
+                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">2</span>
+                    </button>
+                    <button onclick="recordAnswer(1)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
+                        <span>أعارض بشدة</span>
+                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">1</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center px-4">
+                <button id="prev-btn" onclick="prevQuestion()" class="text-gray-500 hover:text-deraah font-bold flex items-center gap-2 disabled:opacity-0 disabled:pointer-events-none transition-all">
+                    <span>&rarr;</span> السؤال السابق
+                </button>
+                <p class="text-sm text-gray-400">أكاديمية درعه</p>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-screen" class="hidden space-y-8">
+            <div class="glass-card rounded-3xl p-8 shadow-xl border-t-4 border-deraah">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">نتائج تحليلك الشخصي</h2>
+                    <p class="text-gray-600">بناءً على إجاباتك، إليك ملفك الشخصي وفق مقياس DISC</p>
+                </div>
+
+                <div class="space-y-8">
+                    <div id="dominant-result-card" class="p-6 md:p-8 rounded-3xl bg-gray-50 border-r-8 shadow-md">
+                        <div class="flex flex-col md:flex-row md:items-center gap-5">
+                            <span id="result-letter" class="text-4xl font-black w-16 h-16 flex items-center justify-center rounded-2xl text-white shadow-md shrink-0"></span>
+                            <div class="flex-1">
+                                <div class="flex flex-wrap items-center gap-3 mb-2">
+                                    <h4 class="text-gray-400 font-bold text-xs tracking-wider">الشخصية الرئيسية</h4>
+                                    <span id="result-score" class="px-3 py-1 rounded-full bg-white text-sm font-bold shadow-sm border border-gray-100"></span>
+                                </div>
+                                <h3 id="result-title" class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">النمط السائد</h3>
+                                <p id="result-desc" class="text-gray-700 leading-relaxed text-lg max-w-3xl"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white/85 rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">ترتيب الأنماط حسب النتيجة</h3>
+                        <div id="ranking-bars" class="ranking-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center pb-12 pt-6">
+                <button onclick="location.reload()" class="bg-white border-2 border-deraah text-deraah hover-bg-deraah hover:text-white font-bold py-3 px-10 rounded-full transition duration-300 shadow-md text-lg">
+                    إعادة الاختبار
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        const questions = [
+            { id: 1, text: "أفضل تولي قيادة المجموعات وتوجيه الآخرين لتحقيق الأهداف.", type: "D" },
+            { id: 2, text: "أستمتع بالتعرف على أشخاص جدد وتكوين علاقات اجتماعية واسعة.", type: "I" },
+            { id: 3, text: "أفضل الاستقرار والروتين اليومي الواضح على التغييرات المفاجئة.", type: "S" },
+            { id: 4, text: "أهتم جداً بالدقة والتفاصيل، وأراجع عملي أكثر من مرة لتجنب الأخطاء.", type: "C" },
+            { id: 5, text: "أركز دائماً على النتائج النهائية والوصول للهدف بأسرع وقت.", type: "D" },
+            { id: 6, text: "أجيد تحفيز الآخرين وبث الحماس فيهم من خلال أفكاري.", type: "I" },
+            { id: 7, text: "أنا مستمع جيد للآخرين وأتجنب الدخول في صراعات أو خلافات.", type: "S" },
+            { id: 8, text: "أفضل تحليل البيانات والحقائق قبل اتخاذ أي قرار مهم.", type: "C" },
+            { id: 9, text: "لا أخشى المواجهة إذا كان ذلك سيحل المشكلة ويحقق النتائج.", type: "D" },
+            { id: 10, text: "أحب أن أكون مركز الاهتمام في التجمعات الاجتماعية وأستخدم الفكاهة.", type: "I" },
+            { id: 11, text: "يسعدني جداً مساعدة الآخرين وتقديم الدعم النفسي لهم.", type: "S" },
+            { id: 12, text: "ألتزم بالقواعد والتعليمات والإجراءات الرسمية بدقة.", type: "C" },
+            { id: 13, text: "أحب التحديات والمنافسة، وأضع لنفسي أهدافاً طموحة دائماً.", type: "D" },
+            { id: 14, text: "أعتبر نفسي شخصاً متفائلاً وأبحث دائماً عن الجانب المشرق.", type: "I" },
+            { id: 15, text: "أتميز بالصبر الطويل والهدوء حتى في المواقف الضاغطة.", type: "S" },
+            { id: 16, text: "أبحث عن 'الكمال' في عملي وأنزعج من العشوائية أو عدم الدقة.", type: "C" },
+            { id: 17, text: "أتخذ قراراتي بسرعة وبثقة عالية دون تردد طويل.", type: "D" },
+            { id: 18, text: "أمتلك قدرة عالية على إقناع الآخرين بوجهة نظري.", type: "I" },
+            { id: 19, text: "يصفني الناس بأنني شخص مخلص، يعتمد عليه، وكتوم للأسرار.", type: "S" },
+            { id: 20, text: "أفضل العمل في بيئة منظمة ولها هيكل واضح ومهام محددة.", type: "C" },
+            { id: 21, text: "أهتم بكفاءة العمل وإنجاز المهام أكثر من اهتمامي بالمشاعر.", type: "D" },
+            { id: 22, text: "أتفاعل بسهولة مع مختلف أنواع الشخصيات وأتكيف معهم.", type: "I" },
+            { id: 23, text: "أفضل العمل ضمن فريق متعاون على العمل منفرداً أو في بيئة تنافسية.", type: "S" },
+            { id: 24, text: "أحب البحث وجمع المعلومات الكافية قبل البدء في أي مهمة جديدة.", type: "C" },
+            { id: 25, text: "أضغط على نفسي وعلى الآخرين لإتمام المهام في وقتها المحدد.", type: "D" },
+            { id: 26, text: "أهتم جداً ببناء علاقات ودية وطيبة مع زملائي في العمل.", type: "I" },
+            { id: 27, text: "أحب أن أعرف بالضبط ما هو متوقع مني قبل البدء في التنفيذ.", type: "S" },
+            { id: 28, text: "أقدر المنطق والعقلانية وأفضلها على العواطف عند حل المشكلات.", type: "C" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let answers = [];
+
+        const resultsData = {
+            D: {
+                letter: "D",
+                title: "نمط السيطرة (Dominance)",
+                nick: "المهيمن",
+                desc: "قائد عملي وحاسم، يركز على النتائج والإنجاز السريع ويفضل التحديات الواضحة.",
+                tags: ["مستقل", "مبادر", "واثق", "عملي"],
+                env: ["بيئات عمل تنافسية وتصاعدية", "فرص للقيادة واتخاذ القرار بشكل مستقل", "التركيز على النتائج والكفاءة لا التفاصيل الروتينية", "التحرر من الرقابة المباشرة واللصيقة"],
+                tips: ["حاول الاستماع بوعي أكبر لآراء الآخرين قبل إصدار قراراتك", "قلل من نبرة الحزم والصرامة مع الفريق عند النقاش", "امنح الآخرين وقتاً كافياً للتعبير عن مشاعرهم واحتياجاتهم"],
+                color: '#d32f2f', 
+                bgClass: 'bg-disc-d',
+                borderClass: 'border-disc-d'
+            },
+            I: {
+                letter: "I",
+                title: "نمط التأثير (Influence)",
+                nick: "المؤثر",
+                desc: "شخص اجتماعي ومتفائل، يجيد التواصل وبناء العلاقات وتحفيز من حوله.",
+                tags: ["مرح وعفوي", "منطلق ومتحدث", "مبدع ومبتكر", "دبلوماسي"],
+                env: ["بيئات العمل التشاركية والتعاونية", "أجواء تقدر الإبداع والابتكار والتعبير الحر", "المهام التي تعتمد على مهارات التواصل الاجتماعي المتنوعة", "فرص متكررة لتبادل الأفكار وبناء العلاقات"],
+                tips: ["اهتم بالتفاصيل الصغيرة والمتابعة والتوثيق المنظم للمشاريع", "حاول ألا تشتت تركيزك ببدء مشاريع جديدة قبل إنجاز السابقة", "اعتمد على الأرقام والبيانات الصلبة عند اتخاذ قراراتك المصيرية"],
+                color: '#fbc02d', 
+                bgClass: 'bg-disc-i',
+                borderClass: 'border-disc-i'
+            },
+            S: {
+                letter: "S",
+                title: "نمط الاستقرار (Steadiness)",
+                nick: "الثابت",
+                desc: "شخص هادئ ومتعاون، يدعم الفريق ويحافظ على الاستقرار والعلاقات الطيبة.",
+                tags: ["مستمع رائع", "ودود ومريح", "منظم ومستقر", "صادق ومخلص"],
+                env: ["بيئة عمل آمنة، مستقرة ومنظمة تنظيمًا كافيًا", "العمل الجماعي المشترك القائم على الدعم المتبادل", "الوضوح التام في الصلاحيات والمهام المطلوبة", "تقدير جهودك المستمرة والإخلاص في المدى الطويل"],
+                tips: ["لا تتردد في قبول وتبني التغييرات الإيجابية الضرورية والطارئة", "عبر عن رأيك الفعلي بوضوح وشجاعة حتى وإن اختلف مع الأغلبية", "تدرب على اتخاذ القرارات وحل المشكلات بشكل أسرع وأكثر حسمًا"],
+                color: '#388e3c', 
+                bgClass: 'bg-disc-s',
+                borderClass: 'border-disc-s'
+            },
+            C: {
+                letter: "C",
+                title: "نمط الالتزام (Compliance)",
+                nick: "الممتثل",
+                desc: "شخص دقيق ومنظم، يعتمد على المنطق والبيانات ويهتم بالجودة قبل السرعة.",
+                tags: ["موضوعي جداً", "حذر ومنهجي", "دقيق للغاية", "منطقي في التفكير"],
+                env: ["بيئة عمل احترافية، هادئة وموضوعية", "المهام التي تتطلب تحليلاً عميقاً وتخطيطاً مفصلاً", "وضوح اللوائح والسياسات والمعايير الرسمية", "الحصول على مساحة كافية للتحقق من دقة النتائج"],
+                tips: ["تقبّل أن نسبة بسيطة من الخطأ أمر طبيعي ولا يعني الفشل المطلق", "حاول ألا تستغرق في تفاصيل صغيرة تعيق وتؤخر إنجاز المهام في وقتها", "احرص على تنمية مهارات التواصل والذكاء العاطفي مع زملائك بالعمل"],
+                color: '#1976d2', 
+                bgClass: 'bg-disc-c',
+                borderClass: 'border-disc-c'
+            }
+        };
+
+        function startTest() {
+            document.getElementById('intro-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.remove('hidden');
+            updateQuestion();
+        }
+
+        function updateQuestion() {
+            const q = questions[currentQuestionIndex];
+            document.getElementById('question-text').innerText = q.text;
+            document.getElementById('progress-text').innerText = `السؤال ${currentQuestionIndex + 1} من ${questions.length}`;
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('percentage-text').innerText = `${Math.round(progress)}%`;
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            
+            // Clear active state styling on all options
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-deraah', 'bg-deraah', 'text-white');
+                btn.querySelector('span:last-child').classList.add('text-gray-300');
+                btn.querySelector('span:last-child').classList.remove('text-white');
+            });
+        }
+
+        function recordAnswer(value) {
+            answers[currentQuestionIndex] = value;
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                updateQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                updateQuestion();
+            }
+        }
+
+        function calculateScores() {
+            let scores = { D: 0, I: 0, S: 0, C: 0 };
+            questions.forEach((q, index) => {
+                if (answers[index]) {
+                    scores[q.type] += answers[index];
+                }
+            });
+            return scores;
+        }
+
+        function showResults() {
+            document.getElementById('test-screen').classList.add('hidden');
+            document.getElementById('results-screen').classList.remove('hidden');
+            
+            const scores = calculateScores();
+            const dominant = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+            const data = resultsData[dominant];
+            const orderedScores = Object.keys(scores)
+                .map(type => ({ type, score: scores[type], ...resultsData[type] }))
+                .sort((a, b) => b.score - a.score);
+            const maxScore = Math.max(...orderedScores.map(item => item.score), 1);
+
+            document.getElementById('result-title').innerText = `${data.nick} - ${data.title}`;
+            document.getElementById('result-desc').innerText = data.desc;
+            document.getElementById('result-score').innerText = `${scores[dominant]} نقطة`;
+            document.getElementById('result-score').style.color = data.color;
+            
+            const letterEl = document.getElementById('result-letter');
+            letterEl.innerText = data.letter;
+            letterEl.style.backgroundColor = data.color;
+            
+            const cardEl = document.getElementById('dominant-result-card');
+            cardEl.style.borderColor = data.color;
+
+            const rankingBars = document.getElementById('ranking-bars');
+            rankingBars.innerHTML = '';
+            orderedScores.forEach((item, index) => {
+                const width = Math.max((item.score / maxScore) * 100, 6);
+                rankingBars.innerHTML += `
+                    <div class="score-row">
+                        <div class="flex items-center justify-between gap-3 mb-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="w-9 h-9 rounded-xl text-white font-black flex items-center justify-center shrink-0" style="background-color: ${item.color}">${item.letter}</span>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-gray-800 truncate">${index + 1}. ${item.nick}</div>
+                                    <div class="text-sm text-gray-500">${item.title}</div>
+                                </div>
+                            </div>
+                            <span class="font-black text-lg shrink-0" style="color: ${item.color}">${item.score}</span>
+                        </div>
+                        <div class="score-track">
+                            <div class="score-fill" style="width: ${width}%; background-color: ${item.color}"></div>
+                        </div>
+                    </div>`;
+            });}
+
+    </script>
+</body>
+</html>
