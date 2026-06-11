@@ -3,403 +3,483 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مقياس DISC المطور - تحليل الشخصية التفاعلي</title>
+    <title>اختبار DISC لتحليل الشخصيات - درعه</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: #fcfdfe;
-            color: #2d3436;
-            position: relative;
-            min-height: 100vh;
-            overflow-x: hidden;
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        brand: '#c81d77',
+                        brandDark: '#9f145d',
+                        ink: '#172033',
+                        soft: '#f7f3f7',
+                        discD: '#d32f2f',
+                        discI: '#f2a900',
+                        discS: '#2e7d32',
+                        discC: '#1976d2'
+                    }
+                }
+            }
         }
-        
-        /* الخلفية منخفضة الشفافية لتجنب تشتيت النص */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-height: 100vh;
+            font-family: 'Cairo', sans-serif;
+            color: #172033;
+            background:
+                radial-gradient(circle at top right, rgba(200, 29, 119, 0.12), transparent 34rem),
+                radial-gradient(circle at bottom left, rgba(25, 118, 210, 0.10), transparent 30rem),
+                linear-gradient(180deg, #fff 0%, #f8fafc 48%, #f7f3f7 100%);
+        }
+        .screen { animation: enter 0.35s ease both; }
+        @keyframes enter {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .app-shell {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+        .hero-visual {
             background-image: url('Screenshot 2026-06-10 150616.png');
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
-            opacity: 0.06; /* تم تقليل الشفافية إلى 6% فقط لتكون هادئة جداً */
-            z-index: -1;
-            pointer-events: none;
         }
-        
-        /* Custom Colors based on Deraah Logo */
-        .text-deraah { color: #c41e7f; } /* Main pink/purple from logo */
-        .bg-deraah { background-color: #c41e7f; }
-        .border-deraah { border-color: #c41e7f; }
-        .hover-bg-deraah:hover { background-color: #a01767; }
-        
-        /* DISC Colors based on the presentation image */
-        .text-disc-d { color: #d32f2f; } /* Red */
-        .text-disc-i { color: #fbc02d; } /* Yellow */
-        .text-disc-s { color: #388e3c; } /* Green */
-        .text-disc-c { color: #1976d2; } /* Blue */
-        
-        .bg-disc-d { background-color: #d32f2f; }
-        .bg-disc-i { background-color: #fbc02d; }
-        .bg-disc-s { background-color: #388e3c; }
-        .bg-disc-c { background-color: #1976d2; }
-
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 350px;
-            max-height: 400px;
+        .choice-btn {
+            min-height: 88px;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
         }
-        .option-btn {
-            transition: all 0.2s ease-in-out;
+        .choice-btn:hover { transform: translateY(-2px); }
+        .choice-btn.selected {
+            border-color: #c81d77;
+            background: #fff1f7;
+            box-shadow: 0 14px 35px rgba(200, 29, 119, 0.16);
         }
-        .option-btn.active {
-            background-color: #c41e7f;
-            color: white;
-            border-color: #c41e7f;
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #d8dee8;
+            transition: width 0.2s ease, background-color 0.2s ease;
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-        }
-        .ranking-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .score-row {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 14px;
-        }
+        .step-dot.done { background: #c81d77; }
+        .step-dot.current { width: 28px; background: #172033; }
         .score-track {
-            height: 14px;
-            background: #e5e7eb;
+            height: 16px;
+            background: #e8edf4;
             border-radius: 999px;
             overflow: hidden;
         }
         .score-fill {
             height: 100%;
             border-radius: 999px;
-            transition: width 0.6s ease;
+            width: 0%;
+            transition: width 0.8s ease;
         }
-        .progress-bar {
-            transition: width 0.4s ease-in-out;
+        .glass {
+            background: rgba(255,255,255,0.86);
+            border: 1px solid rgba(226,232,240,0.95);
+            box-shadow: 0 20px 60px rgba(15,23,42,0.08);
+            backdrop-filter: blur(14px);
         }
     </style>
 </head>
-<body class="min-h-screen relative">
-    
-    <div id="app" class="max-w-4xl mx-auto px-4 py-8 relative z-10">
-        
-        <!-- Header Section -->
-        <header class="text-center mb-10 flex flex-col items-center">
-            <!-- استخدام اسم الملف الصحيح للشعار في المجلد المحلي مع خيار بديل في حال لم يحمل -->
-            <img src="deraah_logo.png" alt="أكاديمية درعه" class="h-28 mb-4 rounded-xl object-contain drop-shadow-md" onerror="this.onerror=null; this.src='https://placehold.co/200x100/c41e7f/ffffff?text=Deraah+Academy';">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">مقياس DISC المطور</h1>
-            <p class="text-lg text-gray-600 font-medium">اكتشف إمكانياتك - أكاديمية درعه</p>
-        </header>
+<body class="antialiased">
+    <main class="app-shell py-6 md:py-10">
+        <!-- شاشة البداية والترحيب -->
+        <section id="welcome-screen" class="screen">
+            <div class="max-w-3xl mx-auto space-y-6">
+                <div class="glass rounded-[2rem] p-6 md:p-8">
+                    <!-- لوجو درعه في المنتصف -->
+                    <div class="flex justify-center mb-6">
+                        <img src="deraah_logo.png" alt="Deraah Logo" class="h-20 md:h-28 object-contain" onerror="this.src='https://via.placeholder.com/200x80/c81d77/ffffff?text=Deraah+Logo'">
+                    </div>
+                    
+                    <div class="text-center mb-7">
+                        <h1 class="text-3xl md:text-5xl font-black text-ink leading-tight mb-3">اختبار DISC لتحليل الشخصيات</h1>
+                        <p class="text-lg md:text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto">اكتشف إمكانياتك وتعرف على نمط شخصيتك وطريقة تفاعلك مع الآخرين في بيئة العمل. هذا الاختبار السريع سيساعدك في التحضير لدورتنا التدريبية القادمة.</p>
+                    </div>
 
-        <!-- Intro Section -->
-        <section id="intro-screen" class="glass-card rounded-3xl p-8 text-center border-t-4 border-deraah">
-            <div class="mb-8">
-                <!-- الصورة التعريفية التوضيحية داخل الكارت التعريفي -->
-                <div class="flex justify-center mb-6">
-                    <img src="Screenshot 2026-06-10 150616.png" alt="DISC Brain" class="max-w-full h-auto md:max-h-72 rounded-2xl shadow-lg border border-gray-100 object-cover" onerror="this.style.display='none'">
-                </div>
-                <h2 class="text-2xl font-bold mb-6 text-deraah">اكتشف نمط قيادتك وتفاعلك</h2>
-                <div class="text-right space-y-4 inline-block max-w-lg mx-auto bg-white/80 p-6 rounded-2xl border border-gray-100 shadow-sm">
-                    <p class="flex items-center gap-2"><span class="text-deraah font-bold text-xl">•</span> أجب بناءً على سلوكك الطبيعي المعتاد وليس ما تود أن تكون عليه.</p>
-                    <p class="flex items-center gap-2"><span class="text-deraah font-bold text-xl">•</span> اختر الدرجة من 1 (أعارض بشدة) إلى 5 (أوافق بشدة).</p>
-                    <p class="flex items-center gap-2"><span class="text-deraah font-bold text-xl">•</span> يستغرق الاختبار حوالي 5 دقائق فقط.</p>
-                </div>
-            </div>
-            <button onclick="startTest()" class="bg-deraah hover-bg-deraah text-white font-bold py-4 px-12 rounded-full transition duration-300 transform hover:scale-105 shadow-lg text-lg">
-                ابدأ الاختبار الآن
-            </button>
-        </section>
-
-        <!-- Test Section -->
-        <section id="test-screen" class="hidden">
-            <div class="mb-8 glass-card p-4 rounded-2xl">
-                <div class="flex justify-between items-center mb-2">
-                    <span id="progress-text" class="text-sm font-bold text-deraah">السؤال 1 من 28</span>
-                    <span id="percentage-text" class="text-sm font-bold text-deraah">0%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                    <div id="progress-bar" class="progress-bar bg-deraah h-3 rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <div id="question-card" class="glass-card rounded-3xl p-8 md:p-12 shadow-xl border-r-4 border-deraah mb-6">
-                <h3 id="question-text" class="text-2xl md:text-3xl font-medium mb-10 text-center leading-relaxed text-gray-800">جاري تحميل السؤال...</h3>
-                
-                <div class="grid grid-cols-1 gap-4 max-w-xl mx-auto">
-                    <button onclick="recordAnswer(5)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
-                        <span>أوافق بشدة</span>
-                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">5</span>
-                    </button>
-                    <button onclick="recordAnswer(4)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
-                        <span>أوافق</span>
-                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">4</span>
-                    </button>
-                    <button onclick="recordAnswer(3)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
-                        <span>محايد</span>
-                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">3</span>
-                    </button>
-                    <button onclick="recordAnswer(2)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
-                        <span>أعارض</span>
-                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">2</span>
-                    </button>
-                    <button onclick="recordAnswer(1)" class="option-btn bg-white border-2 border-gray-200 hover:border-deraah py-4 px-6 rounded-xl text-right flex items-center justify-between transition-all group text-lg font-medium shadow-sm hover:shadow">
-                        <span>أعارض بشدة</span>
-                        <span class="text-gray-300 group-hover:text-deraah text-xl font-bold">1</span>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="flex justify-between items-center px-4">
-                <button id="prev-btn" onclick="prevQuestion()" class="text-gray-500 hover:text-deraah font-bold flex items-center gap-2 disabled:opacity-0 disabled:pointer-events-none transition-all">
-                    <span>&rarr;</span> السؤال السابق
-                </button>
-                <p class="text-sm text-gray-400">أكاديمية درعه</p>
-            </div>
-        </section>
-
-        <!-- Results Section -->
-        <section id="results-screen" class="hidden space-y-8">
-            <div class="glass-card rounded-3xl p-8 shadow-xl border-t-4 border-deraah">
-                <div class="text-center mb-10">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">نتائج تحليلك الشخصي</h2>
-                    <p class="text-gray-600">بناءً على إجاباتك، إليك ملفك الشخصي وفق مقياس DISC</p>
+                    <!-- صورة الغلاف -->
+                    <div class="rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                        <div class="hero-visual aspect-[16/9]"></div>
+                    </div>
                 </div>
 
-                <div class="space-y-8">
-                    <div id="dominant-result-card" class="p-6 md:p-8 rounded-3xl bg-gray-50 border-r-8 shadow-md">
-                        <div class="flex flex-col md:flex-row md:items-center gap-5">
-                            <span id="result-letter" class="text-4xl font-black w-16 h-16 flex items-center justify-center rounded-2xl text-white shadow-md shrink-0"></span>
-                            <div class="flex-1">
-                                <div class="flex flex-wrap items-center gap-3 mb-2">
-                                    <h4 class="text-gray-400 font-bold text-xs tracking-wider">الشخصية الرئيسية</h4>
-                                    <span id="result-score" class="px-3 py-1 rounded-full bg-white text-sm font-bold shadow-sm border border-gray-100"></span>
-                                </div>
-                                <h3 id="result-title" class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">النمط السائد</h3>
-                                <p id="result-desc" class="text-gray-700 leading-relaxed text-lg max-w-3xl"></p>
+                <div class="glass rounded-[2rem] p-6 md:p-8">
+                    <h2 class="text-2xl font-black text-ink mb-5 flex items-center"><span class="text-brand ml-2">💡</span> تعليمات هامة قبل البدء:</h2>
+                    <div class="grid gap-4 mb-8">
+                        <div class="rounded-2xl bg-white p-5 border border-slate-100 shadow-sm flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold">1</div>
+                            <div>
+                                <p class="text-slate-800 font-bold mb-1">الصدق مع الذات</p>
+                                <p class="text-slate-600">أجب بناءً على سلوكك الطبيعي المعتاد في بيئة العمل، وليس ما تود أن تكون عليه.</p>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl bg-white p-5 border border-slate-100 shadow-sm flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center shrink-0 font-bold">2</div>
+                            <div>
+                                <p class="text-slate-800 font-bold mb-1">لا يوجد صح أو خطأ</p>
+                                <p class="text-slate-600">ليس هناك إجابة صحيحة وإجابة خاطئة، ولا يوجد اطلاع على إجاباتك الفردية.</p>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl bg-white p-5 border border-slate-100 shadow-sm flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 font-bold">3</div>
+                            <div>
+                                <p class="text-slate-800 font-bold mb-1">الوقت المتوقع</p>
+                                <p class="text-slate-600">الاختبار يتكون من 32 سؤالاً ويستغرق من 5 إلى 10 دقائق تقريباً.</p>
+                            </div>
+                        </div>
+                        <div class="rounded-2xl bg-white p-5 border-2 border-brand/20 shadow-sm flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center shrink-0 font-bold">4</div>
+                            <div>
+                                <p class="text-brandDark font-bold mb-1">مشاركة النتيجة</p>
+                                <p class="text-slate-700 font-semibold">يرجى إظهار الشخصية التي ظهرت لك في نهاية الاختبار للمدرب.</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white/85 rounded-3xl p-6 md:p-8 border border-gray-100 shadow-sm">
-                        <h3 class="text-2xl font-bold text-gray-800 mb-6">ترتيب الأنماط حسب النتيجة</h3>
-                        <div id="ranking-bars" class="ranking-list"></div>
-                    </div>
+                    <button id="start-btn" onclick="startQuiz()" class="w-full bg-brand hover:bg-brandDark text-white text-xl font-extrabold py-4 px-8 rounded-2xl shadow-lg shadow-pink-900/10 transition hover:-translate-y-0.5">
+                        ابدأ الاختبار الآن
+                    </button>
                 </div>
-            </div>
-
-            <div class="text-center pb-12 pt-6">
-                <button onclick="location.reload()" class="bg-white border-2 border-deraah text-deraah hover-bg-deraah hover:text-white font-bold py-3 px-10 rounded-full transition duration-300 shadow-md text-lg">
-                    إعادة الاختبار
-                </button>
             </div>
         </section>
 
-    </div>
+        <!-- شاشة الاختبار -->
+        <section id="quiz-screen" class="hidden screen">
+            <div class="glass rounded-[2rem] overflow-hidden relative border border-slate-200">
+                <!-- لوجو درعه أعلى شاشة الأسئلة -->
+                <div class="flex justify-center bg-white/90 pt-5 pb-3 border-b border-slate-100">
+                    <img src="deraah_logo.png" alt="Deraah Logo" class="h-12 md:h-16 object-contain" onerror="this.src='https://via.placeholder.com/150x50/c81d77/ffffff?text=Deraah+Logo'">
+                </div>
+                <div class="p-5 md:p-6 border-b border-slate-200 bg-white/80">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                        <div>
+                            <p class="text-sm font-bold text-brand">تحليل الشخصيات DISC</p>
+                            <h2 class="text-2xl font-black text-ink">السؤال <span id="current-q-num">1</span> من <span id="total-q-num">32</span></h2>
+                        </div>
+                        <div class="text-left md:text-right">
+                            <p id="progress-pct" class="text-3xl font-black text-brand">0%</p>
+                            <p class="text-sm text-slate-500">نسبة الإكمال</p>
+                        </div>
+                    </div>
+                    <div class="h-3 bg-slate-200 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-brand rounded-full transition-all duration-300" style="width:0%"></div>
+                    </div>
+                    <div id="question-dots" class="flex flex-wrap gap-1.5 mt-4"></div>
+                </div>
+
+                <div class="p-6 md:p-10 bg-white">
+                    <div class="min-h-[150px] flex items-center justify-center text-center mb-8">
+                        <h3 id="question-text" class="text-2xl md:text-4xl font-extrabold leading-relaxed text-ink"></h3>
+                    </div>
+
+                    <!-- خيارات الإجابة بالإيموجيز المطلوبة -->
+                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3" id="options-container">
+                        <button type="button" onclick="selectOption(5)" class="choice-btn rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-800 flex flex-col items-center justify-center gap-2"><span class="text-4xl" aria-hidden="true">🤩</span><span>متفق بشدة</span></button>
+                        <button type="button" onclick="selectOption(4)" class="choice-btn rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-800 flex flex-col items-center justify-center gap-2"><span class="text-4xl" aria-hidden="true">😊</span><span>متفق</span></button>
+                        <button type="button" onclick="selectOption(3)" class="choice-btn rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-800 flex flex-col items-center justify-center gap-2"><span class="text-4xl" aria-hidden="true">🤔</span><span>محايد / عادي</span></button>
+                        <button type="button" onclick="selectOption(2)" class="choice-btn rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-800 flex flex-col items-center justify-center gap-2"><span class="text-4xl" aria-hidden="true">😕</span><span>لا أتفق</span></button>
+                        <button type="button" onclick="selectOption(1)" class="choice-btn rounded-2xl border-2 border-slate-200 bg-white p-4 font-bold text-slate-800 flex flex-col items-center justify-center gap-2"><span class="text-4xl" aria-hidden="true">😞</span><span>لا أتفق بشدة</span></button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 mt-8 pt-6 border-t border-slate-200">
+                        <button id="prev-btn" onclick="prevQuestion()" class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition disabled:opacity-40 disabled:pointer-events-none">السابق</button>
+                        <p class="text-sm text-slate-500 text-center hidden md:block">اختر الإجابة الأقرب لسلوكك الطبيعي (يتم الانتقال تلقائياً)</p>
+                        <button id="next-btn" onclick="nextQuestion()" class="px-5 py-3 rounded-xl bg-ink hover:bg-slate-700 text-white font-bold transition disabled:opacity-40 disabled:pointer-events-none">التالي</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- شاشة النتيجة -->
+        <section id="results-screen" class="hidden screen">
+            <div class="glass rounded-[2rem] overflow-hidden">
+                <!-- لوجو درعه أعلى شاشة النتيجة -->
+                <div class="flex justify-center bg-white pt-6 pb-4 border-b border-slate-100">
+                    <img src="deraah_logo.png" alt="Deraah Logo" class="h-14 md:h-20 object-contain" onerror="this.src='https://via.placeholder.com/150x50/c81d77/ffffff?text=Deraah+Logo'">
+                </div>
+                <!-- خلفية الكارت تتغير برمجياً حسب الشخصيات -->
+                <div id="result-card-header" class="p-8 md:p-10 text-center text-white transition-colors duration-500">
+                    <p class="font-bold opacity-90 mb-2">النمط الشخصي الخاص بك</p>
+                    <div id="result-letters" class="text-6xl md:text-8xl font-black leading-none mb-3 drop-shadow-md tracking-widest"></div>
+                    <h2 id="result-names" class="text-3xl md:text-4xl font-black drop-shadow-sm mb-4"></h2>
+                    
+                    <div class="bg-white/20 backdrop-blur-sm rounded-xl p-6 text-right max-w-3xl mx-auto shadow-inner">
+                        <h4 class="text-xl font-bold mb-3 border-b border-white/30 pb-2">مفاتيح شخصيتك:</h4>
+                        <div id="result-description" class="text-lg md:text-xl leading-relaxed space-y-3">
+                            <!-- الوصف يضاف هنا عبر الجافاسكريبت -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 md:p-8 bg-slate-50">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6">
+                        <div>
+                            <p class="text-sm font-bold text-brand">التفصيل الكامل للأنماط</p>
+                            <h3 class="text-2xl md:text-3xl font-black text-ink">درجات أنماط DISC الأربعة</h3>
+                        </div>
+                        <button onclick="location.reload()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-5 rounded-xl transition">إعادة الاختبار</button>
+                    </div>
+                    <div id="chart-container" class="space-y-4">
+                        <!-- البارات تضاف هنا -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- رسالة للمدرب -->
+            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-2xl p-6 text-center shadow-sm">
+                <p class="text-blue-800 font-bold text-lg"><i class="fa-solid fa-bullhorn ml-2"></i> يرجى إبقاء هذه الشاشة مفتوحة وإظهار النتيجة للمدرب.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-6 text-center text-sm text-slate-500">© 2026 أكاديمية درعه (Deraah Academy) - جميع الحقوق محفوظة.</footer>
 
     <script>
         const questions = [
-            { id: 1, text: "أفضل تولي قيادة المجموعات وتوجيه الآخرين لتحقيق الأهداف.", type: "D" },
-            { id: 2, text: "أستمتع بالتعرف على أشخاص جدد وتكوين علاقات اجتماعية واسعة.", type: "I" },
-            { id: 3, text: "أفضل الاستقرار والروتين اليومي الواضح على التغييرات المفاجئة.", type: "S" },
-            { id: 4, text: "أهتم جداً بالدقة والتفاصيل، وأراجع عملي أكثر من مرة لتجنب الأخطاء.", type: "C" },
-            { id: 5, text: "أركز دائماً على النتائج النهائية والوصول للهدف بأسرع وقت.", type: "D" },
-            { id: 6, text: "أجيد تحفيز الآخرين وبث الحماس فيهم من خلال أفكاري.", type: "I" },
-            { id: 7, text: "أنا مستمع جيد للآخرين وأتجنب الدخول في صراعات أو خلافات.", type: "S" },
-            { id: 8, text: "أفضل تحليل البيانات والحقائق قبل اتخاذ أي قرار مهم.", type: "C" },
-            { id: 9, text: "لا أخشى المواجهة إذا كان ذلك سيحل المشكلة ويحقق النتائج.", type: "D" },
-            { id: 10, text: "أحب أن أكون مركز الاهتمام في التجمعات الاجتماعية وأستخدم الفكاهة.", type: "I" },
-            { id: 11, text: "يسعدني جداً مساعدة الآخرين وتقديم الدعم النفسي لهم.", type: "S" },
-            { id: 12, text: "ألتزم بالقواعد والتعليمات والإجراءات الرسمية بدقة.", type: "C" },
-            { id: 13, text: "أحب التحديات والمنافسة، وأضع لنفسي أهدافاً طموحة دائماً.", type: "D" },
-            { id: 14, text: "أعتبر نفسي شخصاً متفائلاً وأبحث دائماً عن الجانب المشرق.", type: "I" },
-            { id: 15, text: "أتميز بالصبر الطويل والهدوء حتى في المواقف الضاغطة.", type: "S" },
-            { id: 16, text: "أبحث عن 'الكمال' في عملي وأنزعج من العشوائية أو عدم الدقة.", type: "C" },
-            { id: 17, text: "أتخذ قراراتي بسرعة وبثقة عالية دون تردد طويل.", type: "D" },
-            { id: 18, text: "أمتلك قدرة عالية على إقناع الآخرين بوجهة نظري.", type: "I" },
-            { id: 19, text: "يصفني الناس بأنني شخص مخلص، يعتمد عليه، وكتوم للأسرار.", type: "S" },
-            { id: 20, text: "أفضل العمل في بيئة منظمة ولها هيكل واضح ومهام محددة.", type: "C" },
-            { id: 21, text: "أهتم بكفاءة العمل وإنجاز المهام أكثر من اهتمامي بالمشاعر.", type: "D" },
-            { id: 22, text: "أتفاعل بسهولة مع مختلف أنواع الشخصيات وأتكيف معهم.", type: "I" },
-            { id: 23, text: "أفضل العمل ضمن فريق متعاون على العمل منفرداً أو في بيئة تنافسية.", type: "S" },
-            { id: 24, text: "أحب البحث وجمع المعلومات الكافية قبل البدء في أي مهمة جديدة.", type: "C" },
-            { id: 25, text: "أضغط على نفسي وعلى الآخرين لإتمام المهام في وقتها المحدد.", type: "D" },
-            { id: 26, text: "أهتم جداً ببناء علاقات ودية وطيبة مع زملائي في العمل.", type: "I" },
-            { id: 27, text: "أحب أن أعرف بالضبط ما هو متوقع مني قبل البدء في التنفيذ.", type: "S" },
-            { id: 28, text: "أقدر المنطق والعقلانية وأفضلها على العواطف عند حل المشكلات.", type: "C" }
+            { id: 1, type: "D", text: "أفضل اتخاذ القرارات بسرعة وحزم." },
+            { id: 2, type: "I", text: "أستمتع بالتواجد في التجمعات الاجتماعية والتعرف على أشخاص جدد." },
+            { id: 3, type: "S", text: "أهتم جداً بمساعدة الآخرين وضمان شعورهم بالراحة." },
+            { id: 4, type: "C", text: "أحرص على الدقة المتناهية والتأكد من عدم وجود أخطاء في عملي." },
+            { id: 5, type: "D", text: "أحب تولي زمام الأمور وقيادة المجموعة لتحقيق الأهداف." },
+            { id: 6, type: "I", text: "أستخدم الفكاهة والمرح لكسر الجمود والتواصل مع الآخرين." },
+            { id: 7, type: "S", text: "أفضل الروتين الثابت والبيئة المستقرة على التغييرات المفاجئة." },
+            { id: 8, type: "C", text: "أعتمد على المنطق والبيانات بدلاً من العواطف عند اتخاذ القرارات." },
+            { id: 9, type: "D", text: "أشعر بالحماس عند مواجهة التحديات والمنافسة القوية." },
+            { id: 10, type: "I", text: "أحب إلهام الآخرين وتحفيزهم بأفكاري وطاقتي الإيجابية." },
+            { id: 11, type: "S", text: "أعتبر نفسي مستمعاً جيداً وصبوراً جداً مع الآخرين." },
+            { id: 12, type: "C", text: "أفضل اتباع القواعد والإجراءات المحددة بدقة." },
+            { id: 13, type: "D", text: "أركز على النتائج النهائية الملموسة أكثر من التفاصيل الصغيرة." },
+            { id: 14, type: "I", text: "أهتم ببناء علاقات قوية وودودة مع زملائي في العمل." },
+            { id: 15, type: "S", text: "أتجنب الصراعات وأسعى دائماً للحفاظ على السلام والتناغم." },
+            { id: 16, type: "C", text: "أحب تحليل المشكلات بعمق والبحث عن التفاصيل قبل التنفيذ." },
+            { id: 17, type: "D", text: "لا أتردد في التعبير عن رأيي بجرأة حتى لو عارضني الآخرون." },
+            { id: 18, type: "I", text: "أستمتع بالعمل في بيئة تقدر الإبداع والابتكار." },
+            { id: 19, type: "S", text: "يصفني الآخرون بأنني شخص مخلص ويمكن الاعتماد عليه دائماً." },
+            { id: 20, type: "C", text: "أهتم بجودة العمل وتميزه أكثر من سرعة إنجازه." },
+            { id: 21, type: "D", text: "أحب التحكم في النتائج النهائية وضمان سير الأمور كما خُططت." },
+            { id: 22, type: "I", text: "أجد سهولة في التكيف مع مختلف أنواع الشخصيات." },
+            { id: 23, type: "S", text: "أفضل أن يكون دوري داعماً للفريق بدلاً من أن أكون القائد." },
+            { id: 24, type: "C", text: "أنظم مهامي ووقتي بدقة وأهتم بوضع كل شيء في مكانه." },
+            { id: 25, type: "D", text: "أنافس بقوة من أجل الوصول إلى أهدافي الطموحة." },
+            { id: 26, type: "I", text: "أشعر بالسعادة عندما أؤثر بشكل إيجابي في وجهات نظر الآخرين." },
+            { id: 27, type: "S", text: "أحب مساعدة زملائي في حل مشكلاتهم الشخصية والعاطفية." },
+            { id: 28, type: "C", text: "أضع معايير عالية جداً لنفسي وللآخرين في العمل." },
+            { id: 29, type: "D", text: "أفضل العمل بسرعة والضغط على الآخرين للتحرك واتخاذ إجراء." },
+            { id: 30, type: "I", text: "أميل للتحدث ومشاركة أفكاري أكثر من الاستماع في المجموعات." },
+            { id: 31, type: "S", text: "أحتاج لوقت كافٍ للتفكير قبل التأقلم مع أي تغيير جديد." },
+            { id: 32, type: "C", text: "أحرص على مراجعة عملي عدة مرات للتأكد من مثاليته." }
         ];
 
-        let currentQuestionIndex = 0;
-        let answers = [];
-
-        const resultsData = {
-            D: {
-                letter: "D",
-                title: "نمط السيطرة (Dominance)",
-                nick: "المهيمن",
-                desc: "قائد عملي وحاسم، يركز على النتائج والإنجاز السريع ويفضل التحديات الواضحة.",
-                tags: ["مستقل", "مبادر", "واثق", "عملي"],
-                env: ["بيئات عمل تنافسية وتصاعدية", "فرص للقيادة واتخاذ القرار بشكل مستقل", "التركيز على النتائج والكفاءة لا التفاصيل الروتينية", "التحرر من الرقابة المباشرة واللصيقة"],
-                tips: ["حاول الاستماع بوعي أكبر لآراء الآخرين قبل إصدار قراراتك", "قلل من نبرة الحزم والصرامة مع الفريق عند النقاش", "امنح الآخرين وقتاً كافياً للتعبير عن مشاعرهم واحتياجاتهم"],
-                color: '#d32f2f', 
-                bgClass: 'bg-disc-d',
-                borderClass: 'border-disc-d'
-            },
-            I: {
-                letter: "I",
-                title: "نمط التأثير (Influence)",
-                nick: "المؤثر",
-                desc: "شخص اجتماعي ومتفائل، يجيد التواصل وبناء العلاقات وتحفيز من حوله.",
-                tags: ["مرح وعفوي", "منطلق ومتحدث", "مبدع ومبتكر", "دبلوماسي"],
-                env: ["بيئات العمل التشاركية والتعاونية", "أجواء تقدر الإبداع والابتكار والتعبير الحر", "المهام التي تعتمد على مهارات التواصل الاجتماعي المتنوعة", "فرص متكررة لتبادل الأفكار وبناء العلاقات"],
-                tips: ["اهتم بالتفاصيل الصغيرة والمتابعة والتوثيق المنظم للمشاريع", "حاول ألا تشتت تركيزك ببدء مشاريع جديدة قبل إنجاز السابقة", "اعتمد على الأرقام والبيانات الصلبة عند اتخاذ قراراتك المصيرية"],
-                color: '#fbc02d', 
-                bgClass: 'bg-disc-i',
-                borderClass: 'border-disc-i'
-            },
-            S: {
-                letter: "S",
-                title: "نمط الاستقرار (Steadiness)",
-                nick: "الثابت",
-                desc: "شخص هادئ ومتعاون، يدعم الفريق ويحافظ على الاستقرار والعلاقات الطيبة.",
-                tags: ["مستمع رائع", "ودود ومريح", "منظم ومستقر", "صادق ومخلص"],
-                env: ["بيئة عمل آمنة، مستقرة ومنظمة تنظيمًا كافيًا", "العمل الجماعي المشترك القائم على الدعم المتبادل", "الوضوح التام في الصلاحيات والمهام المطلوبة", "تقدير جهودك المستمرة والإخلاص في المدى الطويل"],
-                tips: ["لا تتردد في قبول وتبني التغييرات الإيجابية الضرورية والطارئة", "عبر عن رأيك الفعلي بوضوح وشجاعة حتى وإن اختلف مع الأغلبية", "تدرب على اتخاذ القرارات وحل المشكلات بشكل أسرع وأكثر حسمًا"],
-                color: '#388e3c', 
-                bgClass: 'bg-disc-s',
-                borderClass: 'border-disc-s'
-            },
-            C: {
-                letter: "C",
-                title: "نمط الالتزام (Compliance)",
-                nick: "الممتثل",
-                desc: "شخص دقيق ومنظم، يعتمد على المنطق والبيانات ويهتم بالجودة قبل السرعة.",
-                tags: ["موضوعي جداً", "حذر ومنهجي", "دقيق للغاية", "منطقي في التفكير"],
-                env: ["بيئة عمل احترافية، هادئة وموضوعية", "المهام التي تتطلب تحليلاً عميقاً وتخطيطاً مفصلاً", "وضوح اللوائح والسياسات والمعايير الرسمية", "الحصول على مساحة كافية للتحقق من دقة النتائج"],
-                tips: ["تقبّل أن نسبة بسيطة من الخطأ أمر طبيعي ولا يعني الفشل المطلق", "حاول ألا تستغرق في تفاصيل صغيرة تعيق وتؤخر إنجاز المهام في وقتها", "احرص على تنمية مهارات التواصل والذكاء العاطفي مع زملائك بالعمل"],
-                color: '#1976d2', 
-                bgClass: 'bg-disc-c',
-                borderClass: 'border-disc-c'
-            }
+        // بيانات الشخصيات والأسماء الدقيقة المطلوبة
+        const traitsData = {
+            D: { name: "المهيمن", color: "#C62828", desc: "مباشر وحاسم، يركز على النتائج والتحديات واتخاذ القرارات بسرعة." },
+            I: { name: "المؤثر", color: "#F9A825", desc: "اجتماعي ومقنع، يجيد بناء العلاقات ونشر الحماس داخل الفريق." },
+            S: { name: "الثابت", color: "#2E7D32", desc: "هادئ ومتعاون، يهتم بالاستقرار والدعم وبناء بيئة عمل ودية." },
+            C: { name: "الممتثل", color: "#1565C0", desc: "منظم وتحليلي، يعتمد على الدقة والبيانات والجودة في تنفيذ العمل." }
         };
 
-        function startTest() {
-            document.getElementById('intro-screen').classList.add('hidden');
-            document.getElementById('test-screen').classList.remove('hidden');
-            updateQuestion();
+        let currentQuestionIndex = 0;
+        let pendingAdvance = null;
+        const answers = new Array(questions.length).fill(null);
+
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const questionText = document.getElementById('question-text');
+        const currentQNum = document.getElementById('current-q-num');
+        const totalQNum = document.getElementById('total-q-num');
+        const progressPct = document.getElementById('progress-pct');
+        const progressBar = document.getElementById('progress-bar');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const dotsContainer = document.getElementById('question-dots');
+
+        totalQNum.innerText = questions.length;
+        renderDots();
+
+        function startQuiz() {
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            renderQuestion();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function updateQuestion() {
+        function renderDots() {
+            dotsContainer.innerHTML = questions.map((_, index) => `<span class="step-dot" data-dot="${index}"></span>`).join('');
+        }
+
+        function renderQuestion() {
             const q = questions[currentQuestionIndex];
-            document.getElementById('question-text').innerText = q.text;
-            document.getElementById('progress-text').innerText = `السؤال ${currentQuestionIndex + 1} من ${questions.length}`;
-            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-            document.getElementById('progress-bar').style.width = `${progress}%`;
-            document.getElementById('percentage-text').innerText = `${Math.round(progress)}%`;
-            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
-            
-            // Clear active state styling on all options
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.classList.remove('active', 'border-deraah', 'bg-deraah', 'text-white');
-                btn.querySelector('span:last-child').classList.add('text-gray-300');
-                btn.querySelector('span:last-child').classList.remove('text-white');
+            questionText.innerText = q.text;
+            currentQNum.innerText = currentQuestionIndex + 1;
+
+            const answeredCount = answers.filter(answer => answer !== null).length;
+            const pct = Math.round((answeredCount / questions.length) * 100);
+            progressPct.innerText = pct + "%";
+            progressBar.style.width = pct + "%";
+
+            document.querySelectorAll('.choice-btn').forEach(btn => btn.classList.remove('selected'));
+            if (answers[currentQuestionIndex] !== null) {
+                const selectedIndex = 5 - answers[currentQuestionIndex];
+                document.querySelectorAll('.choice-btn')[selectedIndex].classList.add('selected');
+            }
+
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                dot.classList.toggle('done', answers[index] !== null);
+                dot.classList.toggle('current', index === currentQuestionIndex);
             });
+
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = answers[currentQuestionIndex] === null;
+            nextBtn.innerText = currentQuestionIndex === questions.length - 1 ? 'عرض النتيجة' : 'التالي';
         }
 
-        function recordAnswer(value) {
+        function clearPendingAdvance() {
+            if (pendingAdvance) {
+                clearTimeout(pendingAdvance);
+                pendingAdvance = null;
+            }
+        }
+
+        function selectOption(value) {
+            clearPendingAdvance();
             answers[currentQuestionIndex] = value;
+            renderQuestion();
+            // انتقال تلقائي بعد الإجابة بفترة قصيرة
+            pendingAdvance = setTimeout(() => {
+                pendingAdvance = null;
+                if (currentQuestionIndex < questions.length - 1) {
+                    currentQuestionIndex++;
+                    renderQuestion();
+                } else {
+                    showResults();
+                }
+            }, 300);
+        }
+
+        function prevQuestion() {
+            clearPendingAdvance();
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            clearPendingAdvance();
+            if (answers[currentQuestionIndex] === null) return;
             if (currentQuestionIndex < questions.length - 1) {
                 currentQuestionIndex++;
-                updateQuestion();
+                renderQuestion();
             } else {
                 showResults();
             }
         }
 
-        function prevQuestion() {
-            if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                updateQuestion();
-            }
-        }
-
         function calculateScores() {
-            let scores = { D: 0, I: 0, S: 0, C: 0 };
-            questions.forEach((q, index) => {
-                if (answers[index]) {
-                    scores[q.type] += answers[index];
-                }
+            const scores = { D: 0, I: 0, S: 0, C: 0 };
+            questions.forEach((question, index) => {
+                scores[question.type] += answers[index] || 0;
             });
             return scores;
         }
 
         function showResults() {
-            document.getElementById('test-screen').classList.add('hidden');
-            document.getElementById('results-screen').classList.remove('hidden');
-            
             const scores = calculateScores();
-            const dominant = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-            const data = resultsData[dominant];
-            const orderedScores = Object.keys(scores)
-                .map(type => ({ type, score: scores[type], ...resultsData[type] }))
+            const sortedScores = Object.keys(scores)
+                .map(type => ({ type, score: scores[type], ...traitsData[type] }))
                 .sort((a, b) => b.score - a.score);
-            const maxScore = Math.max(...orderedScores.map(item => item.score), 1);
 
-            document.getElementById('result-title').innerText = `${data.nick} - ${data.title}`;
-            document.getElementById('result-desc').innerText = data.desc;
-            document.getElementById('result-score').innerText = `${scores[dominant]} نقطة`;
-            document.getElementById('result-score').style.color = data.color;
+            // تحديد الأنماط المتداخلة بناءً على فجوة الدرجات
+            let primaryTypes = [sortedScores[0]]; // النمط الأساسي دائمًا موجود
             
-            const letterEl = document.getElementById('result-letter');
-            letterEl.innerText = data.letter;
-            letterEl.style.backgroundColor = data.color;
-            
-            const cardEl = document.getElementById('dominant-result-card');
-            cardEl.style.borderColor = data.color;
+            // النمط الثانوي: إذا كان الفارق 5 درجات أو أقل من الأول
+            if (sortedScores[0].score - sortedScores[1].score <= 5) {
+                primaryTypes.push(sortedScores[1]);
+                
+                // النمط الثالث: إذا كان الفارق 4 درجات أو أقل من الثاني
+                if (sortedScores[1].score - sortedScores[2].score <= 4) {
+                    primaryTypes.push(sortedScores[2]);
+                }
+            }
 
-            const rankingBars = document.getElementById('ranking-bars');
-            rankingBars.innerHTML = '';
-            orderedScores.forEach((item, index) => {
-                const width = Math.max((item.score / maxScore) * 100, 6);
-                rankingBars.innerHTML += `
-                    <div class="score-row">
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+
+            // تجهيز النصوص والألوان للعرض
+            let lettersStr = "";
+            let namesStr = "";
+            let descHtml = "";
+            let colors = [];
+
+            primaryTypes.forEach((pt, index) => {
+                lettersStr += pt.type;
+                namesStr += pt.name + (index < primaryTypes.length - 1 ? " / " : "");
+                descHtml += `<p>• <strong class="text-white">${pt.name}:</strong> ${pt.desc}</p>`;
+                colors.push(pt.color);
+            });
+
+            document.getElementById('result-letters').innerText = lettersStr;
+            document.getElementById('result-names').innerText = namesStr;
+            document.getElementById('result-description').innerHTML = descHtml;
+
+            // تغيير لون خلفية الكارت بناءً على ألوان الشخصيات التي ظهرت
+            const cardHeader = document.getElementById('result-card-header');
+            if (colors.length === 1) {
+                cardHeader.style.background = `linear-gradient(135deg, ${colors[0]}, #a31560)`;
+            } else if (colors.length === 2) {
+                cardHeader.style.background = `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`;
+            } else {
+                cardHeader.style.background = `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`;
+            }
+
+            // رسم بارات الدرجات الأربعة
+            const maxScore = Math.max(...sortedScores.map(item => item.score), 1);
+            const chartContainer = document.getElementById('chart-container');
+            chartContainer.innerHTML = sortedScores.map((item, index) => {
+                const width = Math.max((item.score / maxScore) * 100, 8);
+                return `
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                         <div class="flex items-center justify-between gap-3 mb-3">
                             <div class="flex items-center gap-3 min-w-0">
-                                <span class="w-9 h-9 rounded-xl text-white font-black flex items-center justify-center shrink-0" style="background-color: ${item.color}">${item.letter}</span>
+                                <span class="w-12 h-12 rounded-xl text-white text-xl font-black flex items-center justify-center shrink-0" style="background:${item.color}">${item.type}</span>
                                 <div class="min-w-0">
-                                    <div class="font-bold text-gray-800 truncate">${index + 1}. ${item.nick}</div>
-                                    <div class="text-sm text-gray-500">${item.title}</div>
+                                    <p class="font-black text-slate-800 text-lg truncate">${item.name}</p>
                                 </div>
                             </div>
-                            <span class="font-black text-lg shrink-0" style="color: ${item.color}">${item.score}</span>
+                            <span class="text-3xl font-black" style="color:${item.color}">${item.score}</span>
                         </div>
-                        <div class="score-track">
-                            <div class="score-fill" style="width: ${width}%; background-color: ${item.color}"></div>
-                        </div>
+                        <div class="score-track"><div class="score-fill" style="background:${item.color}" data-width="${width}%"></div></div>
                     </div>`;
-            });}
+            }).join('');
 
+            // تحريك البارات (Animation)
+            setTimeout(() => {
+                chartContainer.querySelectorAll('.score-fill').forEach(bar => {
+                    bar.style.width = bar.getAttribute('data-width');
+                });
+            }, 80);
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // دعم لوحة المفاتيح
+        document.addEventListener('keydown', event => {
+            if (quizScreen.classList.contains('hidden')) return;
+            const value = Number(event.key);
+            if (value >= 1 && value <= 5) selectOption(value);
+            if (event.key === 'ArrowRight') prevQuestion();
+            if (event.key === 'ArrowLeft') nextQuestion();
+        });
     </script>
 </body>
 </html>
